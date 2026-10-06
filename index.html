@@ -1,0 +1,1261 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="AI-менеджер продажу для Telegram: відповідає клієнтам 24/7, підбирає товар, приймає оплату в чаті й записує заявки в Google Таблицю.">
+<meta name="theme-color" content="#010102">
+<meta property="og:title" content="AI-менеджер продажу">
+<meta property="og:description" content="AI-менеджер продажу для Telegram: відповідає клієнтам 24/7, підбирає товар, приймає оплату в чаті й записує заявки в Google Таблицю.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%2322d3ee'/%3E%3Cstop offset='.5' stop-color='%238b5cf6'/%3E%3Cstop offset='1' stop-color='%23ec4899'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='2' y='2' width='20' height='20' rx='6' fill='url(%23g)'/%3E%3Cpath d='M7.5 9.5h9M7.5 13h6' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+<title>AI-менеджер продажу</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: dark product canvas — hero = live chat mockup + CRM panel; then flow, features, pricing ladder, FAQ, CTA. Single dark look by choice. */
+:root {
+  color-scheme: dark;
+  --canvas: #010102;
+  --surface-1: #0f1011;
+  --surface-2: #141516;
+  --surface-3: #18191a;
+  --hairline: #23252a;
+  --hairline-strong: #34343a;
+  --ink: #f7f8f8;
+  --ink-muted: #d0d6e0;
+  --ink-subtle: #8a8f98;
+  --ink-tertiary: #62666d;
+  --primary: #5e6ad2;
+  --primary-hover: #828fff;
+  --primary-focus: #5e69d1;
+  --on-primary: #ffffff;
+  --success: #27a644;
+  --edge: rgba(255,255,255,.06);
+  --c-violet: #8b5cf6;
+  --c-pink: #ec4899;
+  --c-orange: #f97316;
+  --c-amber: #facc15;
+  --c-cyan: #22d3ee;
+  --c-green: #34d399;
+  --grad: linear-gradient(100deg, var(--c-cyan) 0%, var(--c-violet) 35%, var(--c-pink) 65%, var(--c-orange) 100%);
+
+  --font-display: "Geist", "SF Pro Display", -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-text: "Geist", -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --r-xs: 4px; --r-sm: 6px; --r-md: 8px; --r-lg: 12px; --r-xl: 16px; --r-pill: 9999px;
+  --s-xs: 8px; --s-sm: 12px; --s-md: 16px; --s-lg: 24px; --s-xl: 32px; --s-xxl: 48px; --s-section: 96px;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation: none !important; transition: none !important; } }
+body {
+  margin: 0; background: var(--canvas); color: var(--ink);
+  font: 400 16px/1.5 var(--font-text); letter-spacing: -0.05px;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration: none; }
+:focus-visible { outline: 2px solid color-mix(in srgb, var(--primary-focus) 70%, transparent); outline-offset: 2px; border-radius: var(--r-md); }
+.wrap { max-width: 1200px; margin: 0 auto; padding-inline: max(16px, 4vw); }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.eyebrow { font: 600 13px/1.3 var(--font-text); letter-spacing: .6px; text-transform: uppercase; width: fit-content; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.mono { font-family: var(--font-mono); }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 8px 14px; border-radius: var(--r-md);
+  font: 500 14px/1.2 var(--font-text); border: 1px solid transparent; cursor: pointer; transition: background .15s, border-color .15s; white-space: nowrap; }
+.btn-primary { background: linear-gradient(100deg, var(--c-violet), var(--c-pink)); color: var(--on-primary); box-shadow: 0 6px 24px -8px color-mix(in srgb, var(--c-pink) 70%, transparent); }
+.btn-primary:hover { background: linear-gradient(100deg, #9d74ff, #f472b6); }
+.btn-primary:active { background: var(--c-violet); }
+.btn-secondary { background: var(--surface-1); color: var(--ink); border-color: var(--hairline); }
+.btn-secondary:hover { background: var(--surface-2); border-color: var(--hairline-strong); }
+.btn svg { width: 16px; height: 16px; }
+
+/* Nav */
+.nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: color-mix(in srgb, var(--canvas) 85%, transparent);
+  backdrop-filter: blur(12px); border-bottom: 1px solid var(--hairline); }
+.nav .wrap { height: 56px; display: flex; align-items: center; gap: var(--s-lg); }
+.brand { display: flex; align-items: center; gap: 10px; font: 600 15px/1 var(--font-display); letter-spacing: -0.3px; }
+.brand svg { width: 22px; height: 22px; color: var(--primary); }
+.nav-links { display: flex; gap: var(--s-lg); margin-left: auto; font-size: 14px; color: var(--ink-subtle); }
+.nav-links a:hover { color: var(--ink); }
+.nav .btn { margin-left: var(--s-xs); }
+@media (max-width: 768px) { .nav-links { display: none; } .nav .btn { margin-left: auto; } }
+
+/* Hero */
+.hero { padding-block: 88px 64px; position: relative; isolation: isolate; }
+.hero::before { content: ""; position: absolute; z-index: -1; inset: -40px -10vw auto; height: 720px; pointer-events: none;
+  background:
+    radial-gradient(40% 50% at 15% 20%, color-mix(in srgb, var(--c-violet) 45%, transparent), transparent 70%),
+    radial-gradient(35% 45% at 80% 10%, color-mix(in srgb, var(--c-pink) 38%, transparent), transparent 70%),
+    radial-gradient(35% 40% at 60% 70%, color-mix(in srgb, var(--c-cyan) 26%, transparent), transparent 70%),
+    radial-gradient(30% 35% at 95% 60%, color-mix(in srgb, var(--c-orange) 26%, transparent), transparent 70%);
+  filter: blur(20px); }
+.grad-text { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+main { overflow-x: clip; }
+.hero-head { max-width: 820px; display: grid; gap: var(--s-lg); }
+.badge { display: inline-flex; align-items: center; gap: 8px; width: fit-content; padding: 4px 10px 4px 6px; border-radius: var(--r-pill);
+  background: var(--surface-1); border: 1px solid var(--hairline); font-size: 13px; color: var(--ink-muted); }
+.badge b { font-weight: 500; background: var(--surface-3); color: var(--ink); padding: 1px 8px; border-radius: var(--r-pill); font-size: 12px; }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 25%, transparent); }
+h1 { font-size: clamp(40px, 7.2vw, 80px); line-height: 1.05; letter-spacing: clamp(-3px, -0.04em, -1.2px); }
+h1 .dim { color: var(--ink-subtle); }
+.lead { font-size: 18px; line-height: 1.5; letter-spacing: -0.1px; color: var(--ink-muted); max-width: 600px; }
+.hero-cta { display: flex; flex-wrap: wrap; gap: var(--s-sm); }
+
+/* Product mockup */
+.stage { margin-top: 0; background: linear-gradient(var(--surface-1), var(--surface-1)) padding-box, linear-gradient(120deg, var(--c-cyan), var(--c-violet), var(--c-pink), var(--c-orange)) border-box; border: 1px solid transparent; border-radius: var(--r-xl); padding: var(--s-lg);
+  box-shadow: 0 30px 80px -30px color-mix(in srgb, var(--c-violet) 60%, transparent); display: grid; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: var(--s-lg); }
+@media (max-width: 900px) { .stage { grid-template-columns: minmax(0,1fr); padding: var(--s-md); } }
+.panel { background: var(--canvas); border: 1px solid var(--hairline); border-radius: var(--r-lg); overflow: hidden; min-width: 0; display: flex; flex-direction: column; }
+.panel-bar { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--hairline); background: var(--surface-1); }
+.avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--surface-3); border: 1px solid var(--hairline-strong); display: grid; place-items: center; color: var(--primary-hover); flex: none; }
+.avatar svg { width: 18px; height: 18px; }
+.panel-title { font-size: 14px; font-weight: 500; }
+.panel-sub { font-size: 12px; color: var(--ink-subtle); }
+.panel-sub.online { color: var(--c-green); }
+
+.chat { padding: 14px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+.msg { max-width: 82%; padding: 8px 12px; border-radius: 12px; line-height: 1.45; }
+.msg.in { background: var(--surface-2); border: 1px solid var(--hairline); align-self: flex-start; border-bottom-left-radius: 4px; }
+.msg.out { background: linear-gradient(120deg, var(--c-violet), var(--c-pink)); color: var(--on-primary); align-self: flex-end; border-bottom-right-radius: 4px; }
+.msg time { display: block; font-size: 11px; opacity: .6; text-align: right; margin-top: 2px; }
+.voice { display: flex; align-items: center; gap: 10px; min-width: 220px; }
+.play { width: 30px; height: 30px; border-radius: 50%; background: var(--on-primary); color: var(--c-pink); display: grid; place-items: center; flex: none; }
+.play svg { width: 12px; height: 12px; }
+.wave { display: flex; align-items: center; gap: 2px; height: 22px; flex: 1; }
+.wave i { width: 3px; border-radius: 2px; background: currentColor; opacity: .85; }
+.product { align-self: flex-start; width: 82%; background: var(--surface-2); border: 1px solid var(--hairline); border-radius: 12px; overflow: hidden; }
+.product svg.ph { display: block; width: 100%; height: auto; }
+.product .pb { padding: 10px 12px; display: grid; gap: 4px; }
+.product .pn { font-weight: 500; }
+.product .pp { color: var(--ink-subtle); font-size: 13px; }
+.pay { margin-top: 6px; display: flex; justify-content: center; padding: 8px; border-radius: var(--r-md); background: linear-gradient(100deg, var(--c-orange), var(--c-pink)); color: var(--on-primary); font-weight: 500; font-size: 13px; }
+.typing { align-self: flex-start; display: flex; gap: 4px; padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--hairline); border-radius: 12px; }
+.typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-subtle); animation: blink 1.2s infinite; }
+.typing i:nth-child(2) { animation-delay: .2s; } .typing i:nth-child(3) { animation-delay: .4s; }
+@keyframes blink { 0%, 60%, 100% { opacity: .3; } 30% { opacity: 1; } }
+
+.crm-scroll { overflow-x: auto; }
+table.crm { width: 100%; min-width: 560px; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.crm th { text-align: left; font-weight: 500; color: var(--ink-subtle); padding: 10px 14px; border-bottom: 1px solid var(--hairline); white-space: nowrap; }
+.crm td { padding: 11px 14px; border-bottom: 1px solid var(--hairline); color: var(--ink-muted); white-space: nowrap; }
+.crm tr:last-child td { border-bottom: 0; }
+.crm td:first-child { font-family: var(--font-mono); color: var(--ink-subtle); }
+.crm td.name { color: var(--ink); }
+.crm td.sum { text-align: right; color: var(--ink); }
+.crm th.sum { text-align: right; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: var(--r-pill); background: var(--surface-2); border: 1px solid var(--hairline); font-size: 12px; color: var(--ink-muted); }
+.pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--ink-tertiary); }
+.pill.paid::before { background: var(--success); }
+.pill.paid { color: var(--c-green); border-color: color-mix(in srgb, var(--c-green) 35%, transparent); background: color-mix(in srgb, var(--c-green) 10%, transparent); }
+.pill.paid::before { background: var(--c-green); }
+.pill.new { color: var(--c-cyan); border-color: color-mix(in srgb, var(--c-cyan) 35%, transparent); background: color-mix(in srgb, var(--c-cyan) 10%, transparent); }
+.pill.new::before { background: var(--c-cyan); }
+.pill.wait { color: var(--c-amber); border-color: color-mix(in srgb, var(--c-amber) 35%, transparent); background: color-mix(in srgb, var(--c-amber) 10%, transparent); }
+.pill.wait::before { background: var(--c-amber); }
+.crm-foot { margin-top: auto; display: flex; flex-wrap: wrap; gap: var(--s-lg); padding: 14px; border-top: 1px solid var(--hairline); background: var(--surface-1); }
+.kpi { display: grid; gap: 2px; }
+.kpi span { font-size: 12px; color: var(--ink-subtle); }
+.kpi strong { font: 600 20px/1.2 var(--font-display); letter-spacing: -0.4px; font-variant-numeric: tabular-nums; }
+.kpi:nth-child(1) strong { color: var(--c-cyan); } .kpi:nth-child(2) strong { color: var(--c-violet); } .kpi:nth-child(3) strong { color: var(--c-green); }
+
+/* Sections */
+section.block { padding-block: var(--s-section) 0; }
+.sec-head { display: grid; gap: var(--s-md); max-width: 720px; margin-bottom: var(--s-xxl); }
+h2 { font-size: clamp(32px, 4.6vw, 56px); line-height: 1.1; letter-spacing: clamp(-1.8px, -0.032em, -0.8px); }
+.sec-head p { font-size: 18px; color: var(--ink-subtle); max-width: 600px; }
+
+/* Flow (a real sequence → numbered) */
+.flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--hairline); border-radius: var(--r-lg); overflow: hidden; }
+.step { padding: var(--s-lg); display: grid; gap: var(--s-sm); align-content: start; border-right: 1px solid var(--hairline); min-width: 0; }
+.step:last-child { border-right: 0; }
+.step { --hue: var(--c-violet); background: linear-gradient(180deg, color-mix(in srgb, var(--hue) 14%, transparent), transparent 75%); }
+.step:nth-child(1) { --hue: var(--c-cyan); } .step:nth-child(2) { --hue: var(--c-violet); } .step:nth-child(3) { --hue: var(--c-pink); } .step:nth-child(4) { --hue: var(--c-orange); }
+.step .n { font: 600 13px/1 var(--font-mono); color: var(--hue); }
+.step h3 { font-size: 18px; font-weight: 500; letter-spacing: -0.3px; }
+.step p { font-size: 14px; color: var(--ink-subtle); }
+@media (max-width: 1024px) { .flow { grid-template-columns: repeat(2, minmax(0,1fr)); } .step:nth-child(2) { border-right: 0; } .step:nth-child(-n+2) { border-bottom: 1px solid var(--hairline); } }
+@media (max-width: 600px) { .flow { grid-template-columns: minmax(0,1fr); } .step { border-right: 0; border-bottom: 1px solid var(--hairline); } .step:last-child { border-bottom: 0; } }
+
+/* Features */
+.features { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-md); }
+.feat { background: var(--surface-1); border: 1px solid var(--hairline); border-radius: var(--r-lg); padding: var(--s-lg); display: grid; gap: var(--s-sm); align-content: start; box-shadow: inset 0 1px 0 var(--edge); transition: background .15s, border-color .15s; }
+.feat { --hue: var(--c-violet); }
+.feat:nth-child(1) { --hue: var(--c-cyan); } .feat:nth-child(2) { --hue: var(--c-pink); } .feat:nth-child(3) { --hue: var(--c-amber); }
+.feat:nth-child(4) { --hue: var(--c-orange); } .feat:nth-child(5) { --hue: var(--c-green); } .feat:nth-child(6) { --hue: var(--c-violet); }
+.feat:hover { background: var(--surface-2); border-color: color-mix(in srgb, var(--hue) 55%, transparent); box-shadow: 0 16px 40px -20px color-mix(in srgb, var(--hue) 70%, transparent); }
+.feat .ic { width: 40px; height: 40px; border-radius: var(--r-md); background: color-mix(in srgb, var(--hue) 16%, transparent); border: 1px solid color-mix(in srgb, var(--hue) 40%, transparent); display: grid; place-items: center; color: var(--hue); }
+.feat .ic svg { width: 18px; height: 18px; }
+.feat h3 { font-size: 20px; font-weight: 500; letter-spacing: -0.4px; line-height: 1.25; }
+.feat p { font-size: 14px; color: var(--ink-subtle); }
+@media (max-width: 1024px) { .features { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+@media (max-width: 640px) { .features { grid-template-columns: minmax(0,1fr); } }
+
+/* Pricing */
+.pricing { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-md); align-items: stretch; }
+.tier { background: var(--surface-1); border: 1px solid var(--hairline); border-radius: var(--r-lg); padding: var(--s-lg); display: flex; flex-direction: column; gap: var(--s-lg); box-shadow: inset 0 1px 0 var(--edge); min-width: 0; }
+.tier.featured { background: linear-gradient(var(--surface-2), var(--surface-2)) padding-box, linear-gradient(140deg, var(--c-violet), var(--c-pink), var(--c-orange)) border-box; border: 1px solid transparent;
+  box-shadow: 0 24px 60px -24px color-mix(in srgb, var(--c-pink) 60%, transparent); }
+.tier.featured .tag { background: linear-gradient(100deg, var(--c-violet), var(--c-pink)); border-color: transparent; color: #fff; }
+.tier.featured .price strong { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.tier-top { display: grid; gap: var(--s-xs); }
+.tier-name { display: flex; align-items: center; justify-content: space-between; gap: var(--s-xs); }
+.tier h3 { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
+.tag { font-size: 12px; padding: 2px 8px; border-radius: var(--r-pill); background: var(--surface-3); border: 1px solid var(--hairline-strong); color: var(--ink-muted); }
+.tier .desc { font-size: 14px; color: var(--ink-subtle); min-height: 42px; }
+.price { display: flex; align-items: baseline; gap: 6px; }
+.price strong { font: 600 40px/1 var(--font-display); letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+.price span { font-size: 14px; color: var(--ink-subtle); }
+.tier ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; font-size: 14px; color: var(--ink-muted); }
+.tier li { display: grid; grid-template-columns: 16px minmax(0,1fr); gap: 10px; align-items: start; }
+.tier li svg { width: 16px; height: 16px; margin-top: 2px; color: var(--c-green); }
+.tier li.plus { color: var(--ink); }
+.tier li.plus svg { color: var(--c-pink); }
+.tier .btn { margin-top: auto; justify-content: center; }
+.tier .demo { font-size: 13px; color: var(--ink-subtle); text-align: center; }
+.tier .demo a { color: var(--ink-muted); border-bottom: 1px solid var(--hairline-strong); }
+.tier .demo a:hover { color: var(--c-pink); }
+@media (max-width: 960px) { .pricing { grid-template-columns: minmax(0,1fr); max-width: 520px; } }
+
+/* FAQ */
+.faq { border-top: 1px solid var(--hairline); max-width: 860px; }
+.faq details { border-bottom: 1px solid var(--hairline); }
+.faq summary { list-style: none; cursor: pointer; padding: 20px 0; display: flex; justify-content: space-between; gap: var(--s-md); font: 500 17px/1.4 var(--font-display); letter-spacing: -0.2px; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary svg { width: 18px; height: 18px; flex: none; color: var(--ink-subtle); transition: transform .2s; margin-top: 2px; }
+.faq details[open] summary svg { transform: rotate(45deg); color: var(--c-pink); }
+.faq details p { padding: 0 0 20px; color: var(--ink-subtle); max-width: 680px; }
+
+/* CTA */
+.cta { margin-block: var(--s-section); background:
+    radial-gradient(60% 120% at 0% 0%, color-mix(in srgb, var(--c-cyan) 35%, transparent), transparent 60%),
+    radial-gradient(60% 120% at 100% 100%, color-mix(in srgb, var(--c-orange) 40%, transparent), transparent 60%),
+    linear-gradient(120deg, color-mix(in srgb, var(--c-violet) 60%, var(--surface-1)), color-mix(in srgb, var(--c-pink) 55%, var(--surface-1)));
+  border: 1px solid color-mix(in srgb, var(--c-pink) 40%, transparent); border-radius: var(--r-lg); padding: var(--s-xxl); box-shadow: inset 0 1px 0 var(--edge);
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-lg); }
+.cta h2 { font-size: clamp(26px, 3vw, 32px); letter-spacing: -0.8px; max-width: 560px; }
+.cta p { color: var(--ink); opacity: .85; margin-top: var(--s-xs); }
+.cta .btn-primary { background: #ffffff; color: #18191a; box-shadow: 0 10px 30px -10px rgba(0,0,0,.6); }
+.cta .btn-primary:hover { background: #f1f1f4; }
+.cta .tg-handle { font-family: var(--font-mono); font-size: 14px; opacity: 1; margin-top: var(--s-sm); user-select: all; }
+@media (max-width: 600px) { .cta { padding: var(--s-lg); } }
+
+footer { border-top: 1px solid var(--hairline); padding-block: var(--s-xl); color: var(--ink-subtle); font-size: 13px; }
+footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--s-md); }
+
+
+/* ===== v5: full-screen neural experience ===== */
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-stopped { overflow: hidden; }
+.wrap { max-width: 1360px; }
+.grad-text, .eyebrow { background-size: 250% 100%; animation: shimmer 7s ease-in-out infinite alternate; }
+@keyframes shimmer { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Header overlays the hero */
+.nav { position: fixed; left: 0; right: 0; top: 0; padding-top: env(safe-area-inset-top, 0px); background: transparent; border-bottom-color: transparent; backdrop-filter: none; transition: background .3s, border-color .3s, backdrop-filter .3s; }
+.nav.scrolled { background: color-mix(in srgb, var(--canvas) 70%, transparent); border-bottom-color: var(--hairline); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+.brand svg stop:nth-child(1) { stop-color: var(--c-cyan); } .brand svg stop:nth-child(2) { stop-color: var(--c-violet); } .brand svg stop:nth-child(3) { stop-color: var(--c-pink); }
+.progress { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--grad); transform-origin: left; transform: scaleX(var(--sp, 0)); }
+
+/* Loader */
+.loader { position: fixed; inset: 0; z-index: 100; background: var(--canvas); display: grid; place-content: center; justify-items: center; gap: 18px; animation: loaderAuto .5s 3.2s forwards; }
+.loader.out { animation: loaderOut .8s cubic-bezier(.7,0,.2,1) forwards; }
+@keyframes loaderAuto { to { opacity: 0; visibility: hidden; } }
+@keyframes loaderOut { to { opacity: 0; visibility: hidden; transform: scale(1.4); filter: blur(10px); } }
+.loader svg { width: 140px; height: 140px; overflow: visible; }
+.loader .ln { stroke: url(#lgL); stroke-width: 1.5; fill: none; stroke-dasharray: 60; stroke-dashoffset: 60; animation: draw 1.4s ease-in-out infinite alternate; }
+.loader .ln:nth-child(2n) { animation-delay: .2s; } .loader .ln:nth-child(3n) { animation-delay: .4s; }
+.loader .nd { transform-box: fill-box; transform-origin: center; animation: nodePulse 1.2s ease-in-out infinite; }
+.loader .nd:nth-child(2n) { animation-delay: .3s; } .loader .nd:nth-child(3n) { animation-delay: .6s; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@keyframes nodePulse { 0%, 100% { transform: scale(1); opacity: .8; } 50% { transform: scale(1.6); opacity: 1; } }
+.loader-bar { width: 180px; height: 3px; border-radius: 3px; background: var(--surface-3); overflow: hidden; }
+.loader-bar i { display: block; height: 100%; width: 100%; background: var(--grad); transform-origin: left; transform: scaleX(var(--lp, 0)); transition: transform .2s; }
+.loader-sub { font: 400 12px/1 var(--font-mono); color: var(--ink-subtle); letter-spacing: .5px; }
+
+/* Cursor glow */
+.cursor-glow { position: fixed; left: 0; top: 0; width: 560px; height: 560px; margin: -280px 0 0 -280px; border-radius: 50%; pointer-events: none; z-index: 1;
+  background: radial-gradient(circle, color-mix(in srgb, var(--c-violet) 20%, transparent), color-mix(in srgb, var(--c-pink) 7%, transparent) 40%, transparent 70%);
+  mix-blend-mode: screen; opacity: 0; transition: opacity .4s; will-change: transform; }
+.cursor-glow.on { opacity: 1; }
+body.no-glow .cursor-glow { display: none; }
+
+/* Hero: full-screen scroll story */
+.hero-scroll { position: relative; height: 330vh; }
+.hero-sticky { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; isolation: isolate; touch-action: pan-y; }
+.hero-glow { position: absolute; inset: -15% -20%; z-index: -3; pointer-events: none; filter: blur(40px); opacity: .9;
+  background:
+    radial-gradient(30% 40% at 25% 30%, color-mix(in srgb, var(--c-violet) 32%, transparent), transparent 70%),
+    radial-gradient(28% 38% at 78% 25%, color-mix(in srgb, var(--c-pink) 26%, transparent), transparent 70%),
+    radial-gradient(30% 35% at 65% 80%, color-mix(in srgb, var(--c-cyan) 20%, transparent), transparent 70%);
+  animation: drift 18s ease-in-out infinite alternate; }
+@keyframes drift { 0% { transform: translate(0,0) rotate(0deg) scale(1); } 50% { transform: translate(3%, -2%) rotate(6deg) scale(1.08); } 100% { transform: translate(-3%, 2%) rotate(-5deg) scale(1.02); } }
+#neuro { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; cursor: grab; }
+#neuro.dragging { cursor: grabbing; }
+.hero-content { position: relative; height: 100%; display: flex; align-items: center; pointer-events: none; }
+.hero-copy { max-width: 640px; display: grid; gap: var(--s-lg); pointer-events: auto; will-change: transform, opacity, filter; padding-top: 56px; }
+.hero-copy h1 { font-size: clamp(38px, 6.2vw, 84px); }
+.hero-copy .lead { text-shadow: 0 2px 24px var(--canvas); }
+.hero-tip { font: 400 12px/1.4 var(--font-mono); color: var(--ink-subtle); display: flex; gap: 8px; align-items: center; }
+.hero-tip i { width: 6px; height: 6px; border-radius: 50%; background: var(--c-pink); box-shadow: 0 0 10px var(--c-pink); }
+body.loaded .hero-copy > * { animation: rise-in 1s cubic-bezier(.2,.8,.2,1) both; }
+body.loaded .hero-copy > *:nth-child(2) { animation-delay: .08s; }
+body.loaded .hero-copy > *:nth-child(3) { animation-delay: .16s; }
+body.loaded .hero-copy > *:nth-child(4) { animation-delay: .24s; }
+body.loaded .hero-copy > *:nth-child(5) { animation-delay: .32s; }
+body.loaded #neuro { animation: fade-in 1.6s ease both; }
+@keyframes rise-in { from { opacity: 0; transform: translateY(30px); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+.captions { position: absolute; left: 0; right: 0; bottom: 10%; display: grid; pointer-events: none; padding-inline: 16px; }
+.cap { grid-area: 1 / 1; justify-self: center; text-align: center; max-width: 800px; display: grid; justify-items: center; gap: 12px; opacity: 0; will-change: transform, opacity; }
+.cap h2 { font-size: clamp(28px, 4.6vw, 58px); text-shadow: 0 4px 40px rgba(0,0,0,.85); }
+.scroll-hint { position: absolute; left: 50%; bottom: 24px; translate: -50% 0; display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ink-subtle); pointer-events: none; }
+.mouse { width: 20px; height: 30px; border: 1.5px solid var(--ink-subtle); border-radius: 12px; display: grid; justify-items: center; padding-top: 5px; }
+.mouse i { width: 3px; height: 6px; border-radius: 2px; background: var(--c-pink); animation: wheel 1.6s ease-in-out infinite; }
+@keyframes wheel { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(10px); opacity: 0; } }
+@media (max-width: 900px) {
+  .hero-content { align-items: flex-start; }
+  .hero-copy { padding-top: calc(56px + 28px); gap: var(--s-md); }
+  .hero-copy .badge, .hero-tip { display: none; }
+  .hero-copy h1 { font-size: clamp(32px, 9vw, 56px); }
+  .hero-copy .lead { font-size: 16px; }
+  .scroll-hint { display: none; }
+}
+
+/* Reveal + tilt */
+.tilt { transform-style: preserve-3d; transition: transform .35s cubic-bezier(.2,.8,.2,1); }
+.feat .ic svg { transition: transform .6s cubic-bezier(.2,.9,.25,1.3); }
+.feat:hover .ic svg { transform: rotate(360deg) scale(1.15); }
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    body:not(.no-reveal) :is(.sec-head, .stage, .step, .feat, .tier, .faq details, .core .cta) {
+      animation: reveal linear both; animation-timeline: view(); animation-range: entry 0% entry 70%;
+    }
+    body:not(.no-reveal) :is(.feat:nth-child(3n+2), .tier:nth-child(2), .step:nth-child(2n)) { animation-range: entry 8% entry 78%; }
+    body:not(.no-reveal) :is(.feat:nth-child(3n), .tier:nth-child(3)) { animation-range: entry 16% entry 86%; }
+  }
+}
+@keyframes reveal { from { opacity: 0; translate: 0 60px; scale: .94; filter: blur(6px); } to { opacity: 1; translate: 0 0; scale: 1; filter: none; } }
+.stage { margin-top: 0; background: linear-gradient(var(--surface-1), var(--surface-1)) padding-box, linear-gradient(120deg, var(--c-cyan), var(--c-violet), var(--c-pink), var(--c-orange)) border-box; border: 1px solid transparent;
+  box-shadow: 0 30px 80px -30px color-mix(in srgb, var(--c-violet) 60%, transparent); }
+
+/* Liquid core */
+.core { position: relative; min-height: 100vh; min-height: 100svh; display: grid; align-items: center; overflow: hidden; margin-top: var(--s-section); isolation: isolate;
+  background: radial-gradient(40% 50% at 70% 50%, color-mix(in srgb, var(--c-violet) 30%, transparent), transparent 70%), radial-gradient(30% 40% at 85% 30%, color-mix(in srgb, var(--c-pink) 24%, transparent), transparent 70%), var(--canvas); }
+#liquid { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; cursor: crosshair; opacity: 0; transition: opacity 1.2s; }
+#liquid.ready { opacity: 1; }
+.core-veil { position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(180deg, var(--canvas) 0%, transparent 16%, transparent 84%, var(--canvas) 100%), linear-gradient(90deg, color-mix(in srgb, var(--canvas) 70%, transparent) 0%, transparent 55%); }
+.core-inner { width: 100%; pointer-events: none; }
+.core .cta { pointer-events: auto; margin: 0; max-width: 560px; flex-direction: column; align-items: flex-start;
+  background: color-mix(in srgb, var(--surface-1) 55%, transparent); backdrop-filter: blur(16px) saturate(1.4); -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  border: 1px solid color-mix(in srgb, var(--c-pink) 35%, transparent); }
+.core .cta h2 { font-size: clamp(30px, 4vw, 44px); letter-spacing: -1.2px; }
+.core .cta .btn-primary { background: #ffffff; color: #18191a; }
+.core-hint { position: absolute; right: max(16px, 4vw); bottom: 24px; font: 400 12px/1 var(--font-mono); color: var(--ink-subtle); pointer-events: none; }
+body.no-liquid #liquid { display: none; }
+@media (max-width: 900px) {
+  .core { align-items: end; padding-block: 48px; }
+  .core-veil { background: linear-gradient(180deg, var(--canvas) 0%, transparent 15%, transparent 45%, color-mix(in srgb, var(--canvas) 85%, transparent) 100%); }
+  .core-hint { display: none; }
+}
+
+/* Customizer */
+.fab { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 60; width: 52px; height: 52px; border-radius: 50%; border: 0; cursor: pointer;
+  background: linear-gradient(var(--surface-2), var(--surface-2)) padding-box, conic-gradient(from 0deg, var(--c-cyan), var(--c-violet), var(--c-pink), var(--c-orange), var(--c-cyan)) border-box; border: 2px solid transparent;
+  color: var(--ink); display: grid; place-items: center; box-shadow: 0 10px 30px -8px color-mix(in srgb, var(--c-violet) 70%, transparent); transition: transform .3s; }
+.fab:hover { transform: rotate(60deg) scale(1.06); }
+.fab svg { width: 22px; height: 22px; }
+.panel-cz { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(80px + env(safe-area-inset-bottom, 0px)); z-index: 60; width: min(330px, calc(100vw - 32px)); max-height: calc(100svh - 120px); overflow: auto;
+  background: color-mix(in srgb, var(--surface-1) 80%, transparent); backdrop-filter: blur(20px) saturate(1.3); -webkit-backdrop-filter: blur(20px) saturate(1.3);
+  border: 1px solid var(--hairline-strong); border-radius: var(--r-xl); padding: 18px; display: grid; gap: 16px;
+  box-shadow: 0 30px 80px -20px rgba(0,0,0,.8); transform-origin: bottom right; transition: opacity .3s, transform .35s cubic-bezier(.2,.9,.25,1.1), visibility .3s; }
+.panel-cz[data-open="false"] { opacity: 0; transform: translateY(12px) scale(.94); visibility: hidden; pointer-events: none; }
+.cz-head { display: flex; justify-content: space-between; align-items: center; }
+.cz-head strong { font: 600 16px/1.2 var(--font-display); letter-spacing: -.3px; }
+.cz-head button { background: none; border: 1px solid var(--hairline); color: var(--ink-subtle); border-radius: var(--r-md); padding: 6px 10px; font: 500 12px/1 var(--font-text); cursor: pointer; }
+.cz-head button:hover { color: var(--ink); border-color: var(--hairline-strong); }
+.cz-label { font: 500 12px/1 var(--font-text); color: var(--ink-subtle); letter-spacing: .3px; margin-bottom: 10px; display: flex; justify-content: space-between; }
+.cz-label output { color: var(--ink); font-family: var(--font-mono); }
+.swatches { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.sw { aspect-ratio: 1; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 3px; background-clip: content-box; position: relative; transition: transform .2s; }
+.sw:hover { transform: scale(1.08); }
+.sw[aria-pressed="true"] { border-color: var(--ink); }
+.sw-names { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 6px; font-size: 10px; color: var(--ink-tertiary); text-align: center; }
+.cz-range { width: 100%; -webkit-appearance: none; appearance: none; height: 4px; border-radius: 4px; background: var(--surface-3); outline: none; }
+.cz-range::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 4px color-mix(in srgb, var(--c-violet) 45%, transparent); cursor: pointer; }
+.cz-range::-moz-range-thumb { width: 18px; height: 18px; border: 0; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 4px color-mix(in srgb, var(--c-violet) 45%, transparent); cursor: pointer; }
+.cz-toggles { display: grid; gap: 10px; }
+.tg { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 14px; color: var(--ink-muted); cursor: pointer; }
+.tg input { appearance: none; -webkit-appearance: none; width: 38px; height: 22px; border-radius: 22px; background: var(--surface-3); border: 1px solid var(--hairline-strong); position: relative; cursor: pointer; transition: background .2s; flex: none; margin: 0; }
+.tg input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--ink-subtle); transition: transform .25s cubic-bezier(.2,.9,.25,1.2), background .2s; }
+.tg input:checked { background: linear-gradient(100deg, var(--c-violet), var(--c-pink)); border-color: transparent; }
+.tg input:checked::after { transform: translateX(16px); background: #fff; }
+
+@media (prefers-reduced-motion: reduce) {
+  .loader, .cursor-glow, .captions, .scroll-hint { display: none !important; }
+  .hero-scroll { height: auto; }
+  .hero-sticky { position: relative; height: 100svh; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M21 3L10 14M21 3l-7 18-4-7-7-4 18-7z" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-bot" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="11" rx="3"/><path d="M12 4v4M9 13h.01M15 13h.01M9.5 16h5"/></g></symbol>
+  </defs>
+</svg>
+
+<div class="loader" id="loader" role="status" aria-label="Завантаження">
+  <svg viewBox="0 0 140 140" aria-hidden="true">
+    <defs><linearGradient id="lgL" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset=".5" stop-color="#8b5cf6"/><stop offset="1" stop-color="#ec4899"/></linearGradient></defs>
+    <g>
+      <path class="ln" d="M70 18 L30 52"/><path class="ln" d="M70 18 L110 52"/><path class="ln" d="M30 52 L70 70"/><path class="ln" d="M110 52 L70 70"/>
+      <path class="ln" d="M30 52 L40 104"/><path class="ln" d="M110 52 L100 104"/><path class="ln" d="M70 70 L40 104"/><path class="ln" d="M70 70 L100 104"/><path class="ln" d="M40 104 L100 104"/><path class="ln" d="M70 70 L70 124"/>
+    </g>
+    <g>
+      <circle class="nd" cx="70" cy="18" r="5" fill="#22d3ee"/><circle class="nd" cx="30" cy="52" r="5" fill="#8b5cf6"/><circle class="nd" cx="110" cy="52" r="5" fill="#ec4899"/>
+      <circle class="nd" cx="70" cy="70" r="7" fill="#f97316"/><circle class="nd" cx="40" cy="104" r="5" fill="#ec4899"/><circle class="nd" cx="100" cy="104" r="5" fill="#22d3ee"/><circle class="nd" cx="70" cy="124" r="4" fill="#8b5cf6"/>
+    </g>
+  </svg>
+  <div class="loader-bar"><i id="loadBar"></i></div>
+  <div class="loader-sub">Запускаю нейромережу</div>
+</div>
+<div class="cursor-glow" id="cursorGlow" aria-hidden="true"></div>
+<header class="nav" id="nav">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="На початок">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="bm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset=".5" stop-color="#8b5cf6"/><stop offset="1" stop-color="#ec4899"/></linearGradient></defs><rect x="2" y="2" width="20" height="20" rx="6" fill="url(#bm)"/><path d="M7.5 9.5h9M7.5 13h6" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M14 16.5l2.5 2.5V16.5" fill="#fff"/></svg>
+      salesbot
+    </a>
+    <nav class="nav-links" aria-label="Розділи">
+      <a href="#demo">Як виглядає</a>
+      <a href="#how">Як працює</a>
+      <a href="#features">Можливості</a>
+      <a href="#pricing">Пакети</a>
+      <a href="#faq">Питання</a>
+    </nav>
+    <a class="btn btn-primary" href="#pricing">Обрати пакет</a>
+  </div>
+  <div class="progress" id="progress" aria-hidden="true"></div>
+</header>
+
+<main id="top">
+  <section class="hero-scroll" id="hero">
+    <div class="hero-sticky">
+      <div class="hero-glow" aria-hidden="true"></div>
+      <canvas id="neuro" aria-label="Інтерактивна нейромережа: потягніть, щоб обернути, клацніть, щоб запустити імпульси"></canvas>
+      <div class="wrap hero-content">
+        <div class="hero-copy">
+          <span class="badge"><b>Новий</b><span class="dot" aria-hidden="true"></span>Оплата прямо в чаті Telegram</span>
+          <h1>Менеджер продажу, який <span class="grad-text">не спить, не хворіє і не забуває</span> перезвонити</h1>
+          <p class="lead">AI-бот у Telegram відповідає клієнтам за секунди, підбирає товар з вашого каталогу, приймає оплату і записує кожну заявку в Google Таблицю.</p>
+          <div class="hero-cta">
+            <a class="btn btn-primary" href="#pricing">Обрати пакет <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+            <a class="btn btn-secondary" href="https://t.me/sailgor1_bot" target="_blank" rel="noopener">Спробувати демо-бота</a>
+          </div>
+          <span class="hero-tip"><i></i>Потягніть мозок мишкою, клацніть по нейронах</span>
+        </div>
+      </div>
+      <div class="captions">
+        <div class="cap"><span class="eyebrow">Всередині</span><h2>Нейромережа, яка думає як продавець</h2></div>
+        <div class="cap"><span class="eyebrow">Навчання</span><h2>Вона знає ваші товари, ціни й відповіді</h2></div>
+        <div class="cap"><span class="eyebrow">Результат</span><h2>Питання клієнта за секунди стає продажем</h2></div>
+      </div>
+      <div class="scroll-hint" aria-hidden="true"><span class="mouse"><i></i></span>Гортайте вниз</div>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <section class="block" id="demo">
+      <div class="sec-head">
+        <span class="eyebrow">Так це виглядає</span>
+        <h2>Розмова в Telegram і заявка в таблиці</h2>
+        <p>Клієнт питає, бот підбирає товар і виставляє рахунок, а заявка сама з'являється в Google Таблиці.</p>
+      </div>
+      <div class="stage" aria-label="Приклад роботи бота: чат з клієнтом і таблиця заявок">
+        <div class="panel">
+          <div class="panel-bar">
+            <span class="avatar"><svg aria-hidden="true"><use href="#i-bot"/></svg></span>
+            <div><div class="panel-title">Консультант магазину</div><div class="panel-sub online">бот · онлайн</div></div>
+          </div>
+          <div class="chat">
+            <div class="msg out">Добрий день! Шукаю зволожуючий крем для сухої шкіри, до 1500 грн<time>21:47</time></div>
+            <div class="msg in">Вітаю! Для сухої шкіри раджу крем з гіалуроновою кислотою і пантенолом. Не залишає плівки, підходить на ніч. Ось він:<time>21:47</time></div>
+            <div class="product">
+              <svg class="ph" viewBox="0 0 320 120" aria-hidden="true">
+                <defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#18191a"/><stop offset="1" stop-color="#0f1011"/></linearGradient>
+                <linearGradient id="g2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#828fff"/><stop offset="1" stop-color="#5e6ad2"/></linearGradient></defs>
+                <rect width="320" height="120" fill="url(#g1)"/>
+                <ellipse cx="160" cy="104" rx="56" ry="6" fill="#010102" opacity=".6"/>
+                <rect x="122" y="52" width="76" height="50" rx="10" fill="#f7f8f8"/>
+                <rect x="118" y="30" width="84" height="26" rx="8" fill="url(#g2)"/>
+                <rect x="136" y="70" width="48" height="4" rx="2" fill="#8a8f98"/>
+                <rect x="144" y="80" width="32" height="4" rx="2" fill="#d0d6e0"/>
+              </svg>
+              <div class="pb">
+                <span class="pn">Крем Hydra Balance, 50 мл</span>
+                <span class="pp">1 250 ₴ · в наявності</span>
+                <span class="pay">Оплатити 1 250 ₴</span>
+              </div>
+            </div>
+            <div class="msg out voice" aria-label="Голосове повідомлення, 0:07">
+              <span class="play"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1.5v9l7.5-4.5z" fill="currentColor"/></svg></span>
+              <span class="wave" aria-hidden="true">
+                <i style="height:30%"></i><i style="height:55%"></i><i style="height:80%"></i><i style="height:45%"></i><i style="height:95%"></i><i style="height:60%"></i><i style="height:35%"></i><i style="height:70%"></i><i style="height:90%"></i><i style="height:50%"></i><i style="height:30%"></i><i style="height:65%"></i><i style="height:40%"></i><i style="height:75%"></i><i style="height:45%"></i><i style="height:25%"></i><i style="height:55%"></i><i style="height:35%"></i>
+              </span>
+              <span class="mono" style="font-size:12px">0:07</span>
+            </div>
+            <div class="typing" aria-label="Бот пише"><i></i><i></i><i></i></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-bar">
+            <span class="avatar"><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M4 15h16M10 4v16"/></g></svg></span>
+            <div><div class="panel-title">Заявки · Google Таблиця</div><div class="panel-sub">оновлюється автоматично</div></div>
+          </div>
+          <div class="crm-scroll">
+            <table class="crm">
+              <thead><tr><th>№</th><th>Клієнт</th><th>Товар</th><th>Статус</th><th class="sum">Сума</th></tr></thead>
+              <tbody>
+                <tr><td>#1042</td><td class="name">Олена К.</td><td>Hydra Balance 50 мл</td><td><span class="pill paid">Оплачено</span></td><td class="sum">1 250 ₴</td></tr>
+                <tr><td>#1041</td><td class="name">Андрій М.</td><td>Набір для бороди</td><td><span class="pill paid">Оплачено</span></td><td class="sum">890 ₴</td></tr>
+                <tr><td>#1040</td><td class="name">Ірина Т.</td><td>Сироватка C-Glow</td><td><span class="pill new">Нова заявка</span></td><td class="sum">1 480 ₴</td></tr>
+                <tr><td>#1039</td><td class="name">Марія Л.</td><td>Консультація</td><td><span class="pill wait">Чекає відповіді</span></td><td class="sum">—</td></tr>
+                <tr><td>#1038</td><td class="name">Сергій П.</td><td>Шампунь Root 250 мл</td><td><span class="pill paid">Оплачено</span></td><td class="sum">420 ₴</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="crm-foot">
+            <div class="kpi"><span>Діалогів сьогодні</span><strong>38</strong></div>
+            <div class="kpi"><span>Середня відповідь</span><strong>4 с</strong></div>
+            <div class="kpi"><span>Оплачено</span><strong>2 560 ₴</strong></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="how">
+      <div class="sec-head">
+        <span class="eyebrow">Як працює</span>
+        <h2>Від першого повідомлення до оплати</h2>
+        <p>Клієнт пише о 23:00. Бот відповідає одразу, а ви вранці бачите готове замовлення в таблиці.</p>
+      </div>
+      <div class="flow">
+        <div class="step"><span class="n">01</span><h3>Клієнт пише</h3><p>Текстом або голосом, у вашого бота в Telegram. Посилання можна дати в Instagram, на сайті чи в рекламі.</p></div>
+        <div class="step"><span class="n">02</span><h3>Бот розбирається</h3><p>Ставить уточнюючі питання, як живий менеджер, і відповідає на заперечення про ціну та доставку.</p></div>
+        <div class="step"><span class="n">03</span><h3>Підбирає товар</h3><p>Шукає в каталозі за описом, показує фото й ціну. Не вигадує того, чого у вас немає.</p></div>
+        <div class="step"><span class="n">04</span><h3>Закриває угоду</h3><p>Приймає оплату в чаті, а заявку з контактами записує в Google Таблицю.</p></div>
+      </div>
+    </section>
+
+    <section class="block" id="features">
+      <div class="sec-head">
+        <span class="eyebrow">Можливості</span>
+        <h2>Все, що робить хороший продавець</h2>
+      </div>
+      <div class="features">
+        <div class="feat"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></g></svg></span><h3>Відповідь за секунди</h3><p>Цілодобово, без вихідних. Жоден клієнт не піде до конкурента, бо йому довго не відповідали.</p></div>
+        <div class="feat"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></g></svg></span><h3>Розуміє голосові</h3><p>Клієнт надиктовує питання, бот розшифровує і відповідає. І може сам відповісти голосом.</p></div>
+        <div class="feat"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/></g></svg></span><h3>Каталог з фото</h3><p>Показує товари з фотографіями та цінами і підбирає варіант під запит клієнта.</p></div>
+        <div class="feat"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h3"/></g></svg></span><h3>Оплата в чаті</h3><p>Рахунок приходить прямо в Telegram. Клієнту не треба переходити на сайт і заповнювати форми.</p></div>
+        <div class="feat"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M4 15h16M10 4v16"/></g></svg></span><h3>Заявки в таблиці</h3><p>Кожен клієнт, товар і статус потрапляють у вашу Google Таблицю. Зручно вести облік без CRM за підписку.</p></div>
+        <div class="feat"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4v5c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V7z"/><path d="M9 12l2 2 4-4"/></g></svg></span><h3>Працює на сервері</h3><p>Бот живе в хмарі, а не на вашому комп'ютері. Вимкнули ноутбук, а продажі йдуть далі.</p></div>
+      </div>
+    </section>
+
+    <section class="block" id="pricing">
+      <div class="sec-head">
+        <span class="eyebrow">Пакети</span>
+        <h2>Оплата один раз, бот ваш</h2>
+        <p>Кожен наступний пакет містить усе з попереднього і додає нові можливості.</p>
+      </div>
+      <div class="pricing">
+        <article class="tier">
+          <div class="tier-top">
+            <div class="tier-name"><h3>Менеджер продажу</h3></div>
+            <p class="desc">Текстовий AI-менеджер, який консультує і збирає заявки.</p>
+          </div>
+          <div class="price"><strong>$50</strong><span>разово</span></div>
+          <ul>
+            <li><svg aria-hidden="true"><use href="#i-check"/></svg>Відповіді 24/7 у Telegram</li>
+            <li><svg aria-hidden="true"><use href="#i-check"/></svg>Навчений на ваших товарах і цінах</li>
+            <li><svg aria-hidden="true"><use href="#i-check"/></svg>Обробка заперечень</li>
+            <li><svg aria-hidden="true"><use href="#i-check"/></svg>Запуск на сервері</li>
+          </ul>
+          <a class="btn btn-secondary" href="https://t.me/Sasha_5405" target="_blank" rel="noopener">Замовити</a>
+        </article>
+
+        <article class="tier featured">
+          <div class="tier-top">
+            <div class="tier-name"><h3>Менеджер+</h3><span class="tag">Популярний</span></div>
+            <p class="desc">Усе з базового пакета, плюс бот говорить і слухає.</p>
+          </div>
+          <div class="price"><strong>$100</strong><span>разово</span></div>
+          <ul>
+            <li><svg aria-hidden="true"><use href="#i-check"/></svg>Усе з «Менеджер продажу»</li>
+            <li class="plus"><svg aria-hidden="true"><use href="#i-plus"/></svg>Розуміє голосові повідомлення</li>
+            <li class="plus"><svg aria-hidden="true"><use href="#i-plus"/></svg>Відповідає голосом</li>
+          </ul>
+          <a class="btn btn-primary" href="https://t.me/Sasha_5405" target="_blank" rel="noopener">Замовити</a>
+          <p class="demo">Демо: <a href="https://t.me/sailfok3241_bot" target="_blank" rel="noopener">@sailfok3241_bot</a></p>
+        </article>
+
+        <article class="tier">
+          <div class="tier-top">
+            <div class="tier-name"><h3>Магазин під ключ</h3></div>
+            <p class="desc">Повноцінний магазин у Telegram: каталог, оплата, облік.</p>
+          </div>
+          <div class="price"><strong>$150</strong><span>разово</span></div>
+          <ul>
+            <li><svg aria-hidden="true"><use href="#i-check"/></svg>Усе з «Менеджер+»</li>
+            <li class="plus"><svg aria-hidden="true"><use href="#i-plus"/></svg>Каталог з фото товарів</li>
+            <li class="plus"><svg aria-hidden="true"><use href="#i-plus"/></svg>Автопідбір товару за описом</li>
+            <li class="plus"><svg aria-hidden="true"><use href="#i-plus"/></svg>Оплата прямо в чаті</li>
+            <li class="plus"><svg aria-hidden="true"><use href="#i-plus"/></svg>Заявки в Google Таблицю</li>
+          </ul>
+          <a class="btn btn-secondary" href="https://t.me/Sasha_5405" target="_blank" rel="noopener">Замовити</a>
+          <p class="demo">Демо: <a href="https://t.me/sailgor1_bot" target="_blank" rel="noopener">@sailgor1_bot</a></p>
+        </article>
+      </div>
+    </section>
+
+    <section class="block" id="faq">
+      <div class="sec-head">
+        <span class="eyebrow">Питання</span>
+        <h2>Часті питання</h2>
+      </div>
+      <div class="faq">
+        <details open><summary>Скільки часу займає запуск?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary><p>Зазвичай 1–3 дні. Ви надсилаєте список товарів, ціни й відповіді на типові питання, ми налаштовуємо бота і запускаємо його на сервері.</p></details>
+        <details><summary>Бот не буде вигадувати ціни чи товари?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary><p>Бот відповідає тільки за вашим каталогом і правилами. Якщо питання виходить за їх межі, він пропонує зв'язатися з вами.</p></details>
+        <details><summary>Чи можна перейти на старший пакет пізніше?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary><p>Так. Ви доплачуєте різницю, і ми додаємо нові можливості в того ж бота, без втрати історії й налаштувань.</p></details>
+        <details><summary>Що потрібно від мене для оплати в чаті?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary><p>Підключений платіжний провайдер Telegram Payments. Ми допоможемо його налаштувати під час запуску.</p></details>
+      </div>
+    </section>
+
+  </div>
+
+  <section class="core" id="contact">
+    <canvas id="liquid" aria-hidden="true"></canvas>
+    <div class="core-veil" aria-hidden="true"></div>
+    <div class="wrap core-inner">
+      <div class="cta">
+      <div>
+        <h2>Запустіть свого менеджера цього тижня</h2>
+        <p>Напишіть у Telegram, розкажіть про свій бізнес, і ми підкажемо, який пакет підійде.</p>
+        <p class="tg-handle">Telegram: @Sasha_5405</p>
+      </div>
+      <a class="btn btn-primary" href="https://t.me/Sasha_5405" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#i-send"/></svg>Написати в Telegram</a>
+    </div>
+    </div>
+    <span class="core-hint" aria-hidden="true">Наведіть або клацніть по рідині</span>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 salesbot · AI-менеджери продажу для Telegram</span>
+    <span>Ціни вказані в доларах США</span>
+  </div>
+</footer>
+
+<button class="fab" id="czBtn" aria-label="Налаштування вигляду" aria-expanded="false" aria-controls="czPanel">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></g></svg>
+</button>
+<div class="panel-cz" id="czPanel" data-open="false" role="dialog" aria-label="Налаштування вигляду">
+  <div class="cz-head"><strong>Налаштування</strong><button type="button" id="czReset">Скинути</button></div>
+  <div>
+    <div class="cz-label">Кольорова тема</div>
+    <div class="swatches" id="czSwatches"></div>
+    <div class="sw-names" id="czNames"></div>
+  </div>
+  <div><label class="cz-label" for="czCount">Кількість нейронів <output id="czCountOut"></output></label><input class="cz-range" type="range" id="czCount" min="60" max="420" step="10"></div>
+  <div><label class="cz-label" for="czSpeed">Швидкість обертання <output id="czSpeedOut"></output></label><input class="cz-range" type="range" id="czSpeed" min="0" max="3" step="0.1"></div>
+  <div><label class="cz-label" for="czGlow">Світіння <output id="czGlowOut"></output></label><input class="cz-range" type="range" id="czGlow" min="0.3" max="2.5" step="0.1"></div>
+  <div><label class="cz-label" for="czPulses">Імпульси <output id="czPulsesOut"></output></label><input class="cz-range" type="range" id="czPulses" min="0" max="120" step="2"></div>
+  <div class="cz-toggles">
+    <label class="tg" for="czSmooth">Плавна прокрутка <input type="checkbox" id="czSmooth"></label>
+    <label class="tg" for="czCursor">Світло за курсором <input type="checkbox" id="czCursor"></label>
+    <label class="tg" for="czTilt">3D-нахил карток <input type="checkbox" id="czTilt"></label>
+    <label class="tg" for="czReveal">Поява секцій <input type="checkbox" id="czReveal"></label>
+    <label class="tg" for="czLiquid">Рідке 3D-ядро <input type="checkbox" id="czLiquid"></label>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.20/dist/lenis.min.js" defer></script>
+<script>
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const fine = matchMedia('(pointer: fine)').matches;
+  const small = innerWidth < 700;
+  const root = document.documentElement;
+  const $ = (q) => document.querySelector(q);
+  const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+  const ease = (t) => t * t * (3 - 2 * t);
+  const easeOut = (t) => 1 - Math.pow(1 - t, 3);
+
+  /* ================= settings ================= */
+  const THEMES = {
+    neon:   { name: 'Неон',    c: ['#22d3ee', '#8b5cf6', '#ec4899', '#f97316'] },
+    ocean:  { name: 'Океан',   c: ['#5eead4', '#22d3ee', '#3b82f6', '#6366f1'] },
+    sunset: { name: 'Захід',   c: ['#facc15', '#fb923c', '#f43f5e', '#a855f7'] },
+    matrix: { name: 'Матриця', c: ['#d9f99d', '#a3e635', '#34d399', '#22d3ee'] },
+    ice:    { name: 'Лід',     c: ['#e0f2fe', '#7dd3fc', '#818cf8', '#c084fc'] },
+  };
+  const DEFAULTS = { theme: 'neon', count: small ? 150 : 250, speed: 1, glow: 1.2, pulses: small ? 30 : 60,
+    smooth: true, cursor: true, tilt: true, reveal: true, liquid: true };
+  const S = { ...DEFAULTS };
+  try { Object.assign(S, JSON.parse(localStorage.getItem('sb-settings') || '{}')); } catch (e) {}
+  if (!THEMES[S.theme]) S.theme = 'neon';
+  const save = () => { try { localStorage.setItem('sb-settings', JSON.stringify(S)); } catch (e) {} };
+  const hexRgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+
+  let PAL = [], sprites = [];
+  function buildSprites() {
+    sprites = PAL.map(([r, g, b]) => {
+      const c = document.createElement('canvas'); c.width = c.height = 64;
+      const x = c.getContext('2d'), gr = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+      gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.16, `rgba(${r},${g},${b},.95)`);
+      gr.addColorStop(.45, `rgba(${r},${g},${b},.28)`); gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
+      x.fillStyle = gr; x.fillRect(0, 0, 64, 64); return c;
+    });
+  }
+  const mixPal = (t) => {
+    const f = clamp(t) * (PAL.length - 1), i = Math.min(PAL.length - 2, Math.floor(f)), k = f - i;
+    return PAL[i].map((c, j) => Math.round(c + (PAL[i + 1][j] - c) * k));
+  };
+  function applyTheme() {
+    const c = THEMES[S.theme].c;
+    ['--c-cyan', '--c-violet', '--c-pink', '--c-orange'].forEach((v, i) => root.style.setProperty(v, c[i]));
+    PAL = c.map(hexRgb); buildSprites(); recolor();
+    dispatchEvent(new CustomEvent('sb-theme', { detail: c }));
+  }
+  function applyFlags() {
+    document.body.classList.toggle('no-glow', !S.cursor);
+    document.body.classList.toggle('no-reveal', !S.reveal);
+    document.body.classList.toggle('no-liquid', !S.liquid);
+    setSmooth(S.smooth);
+  }
+
+  /* ================= smooth scroll (Lenis) ================= */
+  let lenis = null;
+  function setSmooth(on) {
+    if (on && !lenis && window.Lenis && !reduce) lenis = new window.Lenis({ lerp: .085, smoothWheel: true });
+    else if (!on && lenis) { lenis.destroy(); lenis = null; }
+  }
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href^="#"]'); if (!a) return;
+    const id = a.getAttribute('href');
+    const el = id === '#top' ? null : document.querySelector(id);
+    if (id !== '#top' && !el) return;
+    e.preventDefault();
+    if (lenis) lenis.scrollTo(el || 0, { offset: el ? -64 : 0, duration: 1.6 });
+    else (el ? el.scrollIntoView({ behavior: 'smooth' }) : scrollTo({ top: 0, behavior: 'smooth' }));
+  });
+
+  /* ================= loader ================= */
+  const loader = $('#loader'), bar = $('#loadBar');
+  let lpTarget = .25, lp = 0, loaded = false;
+  const t0 = performance.now();
+  document.fonts && document.fonts.ready.then(() => { lpTarget = Math.max(lpTarget, .8); });
+  addEventListener('load', () => { lpTarget = 1; setSmooth(S.smooth); });
+  setTimeout(() => { lpTarget = 1; }, 2400);
+  function finishLoad() {
+    if (loaded) return; loaded = true;
+    document.body.classList.add('loaded');
+    if (loader) { loader.classList.add('out'); setTimeout(() => loader.remove(), 900); }
+  }
+  if (reduce) { loader && loader.remove(); loaded = true; }
+
+  /* ================= header / progress ================= */
+  const nav = $('#nav'), prog = $('#progress');
+
+  /* ================= cursor ================= */
+  let tx = 0, ty = 0, mx = 0, my = 0, cx = innerWidth / 2, cy = innerHeight / 2, gx = cx, gy = cy;
+  const glow = $('#cursorGlow');
+  addEventListener('pointermove', (e) => {
+    tx = e.clientX / innerWidth * 2 - 1; ty = e.clientY / innerHeight * 2 - 1; cx = e.clientX; cy = e.clientY;
+    if (fine && glow) glow.classList.add('on');
+  }, { passive: true });
+
+  /* ================= 3D tilt ================= */
+  if (fine && !reduce) {
+    document.querySelectorAll('.feat, .tier, .stage').forEach((el) => {
+      el.classList.add('tilt');
+      const max = el.classList.contains('stage') ? 3 : 8;
+      el.addEventListener('pointermove', (e) => {
+        if (!S.tilt) return;
+        const r = el.getBoundingClientRect(), px = (e.clientX - r.left) / r.width - .5, py = (e.clientY - r.top) / r.height - .5;
+        el.style.transform = `perspective(900px) rotateX(${-py * max}deg) rotateY(${px * max}deg)`;
+      });
+      el.addEventListener('pointerleave', () => { el.style.transform = ''; });
+    });
+  }
+
+  /* ================= counters ================= */
+  const io = new IntersectionObserver((ents) => ents.forEach((en) => {
+    if (!en.isIntersecting) return; io.unobserve(en.target);
+    const el = en.target, txt = el.textContent, m = txt.match(/\d[\d\s]*/);
+    if (!m || reduce) return;
+    const target = parseInt(m[0].replace(/\s/g, ''), 10), s0 = performance.now();
+    (function step(now) {
+      const k = easeOut(clamp((now - s0) / 1300));
+      el.textContent = txt.replace(m[0].trim(), Math.round(target * k).toLocaleString('uk-UA'));
+      if (k < 1) requestAnimationFrame(step); else el.textContent = txt;
+    })(s0);
+  }), { threshold: .6 });
+  document.querySelectorAll('.kpi strong').forEach((el) => io.observe(el));
+
+  /* ================= neural network ================= */
+  const hero = $('#hero'), sticky = $('.hero-sticky'), copy = $('.hero-copy');
+  const caps = [...document.querySelectorAll('.cap')], hint = $('.scroll-hint');
+  const cv = $('#neuro'), ctx = cv.getContext('2d');
+  let W = 0, H = 0, heroVisible = true;
+  let nodes = [], edges = [], pulses = [];
+  const LABELS = ['ціна', 'доставка', 'розмір', 'оплата', 'знижка', 'наявність', 'гарантія', 'відгуки', 'колір', 'подарунок'];
+  let labelNodes = [];
+  const dust = Array.from({ length: small ? 90 : 160 }, () => ({ x: Math.random() * 2 - 1, y: Math.random() * 2 - 1, z: Math.random(), s: Math.random() * 1.3 + .3 }));
+
+  function recolor() { nodes.forEach((n) => { n.col = mixPal(n.t); n.si = Math.min(3, Math.floor(n.t * 4)); }); }
+  function rebuildNet() {
+    nodes = []; edges = [];
+    const N = S.count;
+    while (nodes.length < N) {
+      const u = Math.random() * 2 - 1, v = Math.random() * 2 - 1, w = Math.random() * 2 - 1;
+      if (u * u + v * v + w * w > 1) continue;
+      const side = nodes.length % 2 ? 1 : -1;
+      const x = side * .5 + u * .56, y = v * .7 + .05 * Math.sin(x * 9) - (v > .55 ? .08 : 0), z = w * .85;
+      nodes.push({ x, y, z, t: clamp((x + 1.06) / 2.12), r: .5 + Math.random() * 1.1, fire: 0, sx: 0, sy: 0, dz: 1, d: 0, f: 1, vis: true, ne: [] });
+    }
+    nodes.forEach((a, i) => {
+      const near = [];
+      for (let j = 0; j < N; j++) {
+        if (j === i) continue;
+        const b = nodes[j], dd = (a.x - b.x) ** 2 + (a.y - b.y) ** 2 + (a.z - b.z) ** 2;
+        if (near.length < 3) { near.push([j, dd]); near.sort((m, n) => m[1] - n[1]); }
+        else if (dd < near[2][1]) { near[2] = [j, dd]; near.sort((m, n) => m[1] - n[1]); }
+      }
+      near.forEach(([j]) => {
+        if (a.ne.some((ei) => edges[ei].a === j || edges[ei].b === j)) return;
+        const ei = edges.length; edges.push({ a: i, b: j, bend: (Math.random() - .5) * .45 });
+        a.ne.push(ei); nodes[j].ne.push(ei);
+      });
+    });
+    labelNodes = LABELS.map((_, i) => (i * 37 + 11) % N);
+    recolor(); pulses = []; resizePulses();
+  }
+  function newPulse(fromNode, burst) {
+    const n = fromNode ?? Math.floor(Math.random() * nodes.length), list = nodes[n].ne;
+    if (!list.length) return null;
+    const ei = list[Math.floor(Math.random() * list.length)], e = edges[ei];
+    return { ei, from: n, to: e.a === n ? e.b : e.a, t: 0, sp: (burst ? .03 : .008) + Math.random() * .016, hops: burst ? 4 : -1 };
+  }
+  function resizePulses() {
+    const target = reduce ? 0 : S.pulses;
+    let base = pulses.filter((u) => u.hops < 0);
+    const bursts = pulses.filter((u) => u.hops >= 0);
+    while (base.length < target) { const u = newPulse(); if (!u) break; u.t = Math.random(); base.push(u); }
+    base.length = Math.min(base.length, target);
+    pulses = base.concat(bursts);
+  }
+
+  function sizeCanvas() {
+    const r = sticky.getBoundingClientRect(), dpr = Math.min(small ? 1.5 : 1.75, devicePixelRatio || 1);
+    W = r.width; H = r.height; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  addEventListener('resize', sizeCanvas);
+  new IntersectionObserver(([en]) => { heroVisible = en.isIntersecting; }).observe(hero);
+
+  // drag / hover / click
+  let rotY = 0, rotX = 0, vel = 0, dragX = 0, dragging = false, downX = 0, downY = 0, lastX = 0, lastY = 0, moved = 0;
+  let px = -999, py = -999;
+  cv.addEventListener('pointerdown', (e) => {
+    dragging = true; moved = 0; downX = lastX = e.clientX; downY = lastY = e.clientY;
+    cv.classList.add('dragging'); try { cv.setPointerCapture(e.pointerId); } catch (er) {}
+  });
+  cv.addEventListener('pointermove', (e) => {
+    const r = cv.getBoundingClientRect(); px = e.clientX - r.left; py = e.clientY - r.top;
+    if (!dragging) return;
+    const dx = e.clientX - lastX, dy = e.clientY - lastY; lastX = e.clientX; lastY = e.clientY;
+    moved += Math.abs(dx) + Math.abs(dy);
+    rotY += dx * .006; vel = dx * .0035; dragX = clamp(dragX + dy * .004, -.7, .7);
+  });
+  const endDrag = (e) => {
+    if (!dragging) return; dragging = false; cv.classList.remove('dragging');
+    if (moved < 6) burst(px, py);
+  };
+  cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', endDrag);
+  cv.addEventListener('pointerleave', () => { px = py = -999; });
+  function nearest(x, y, maxD) {
+    let best = -1, bd = maxD * maxD;
+    nodes.forEach((n, i) => { if (!n.vis) return; const d = (n.sx - x) ** 2 + (n.sy - y) ** 2; if (d < bd) { bd = d; best = i; } });
+    return best;
+  }
+  function burst(x, y) {
+    let n = nearest(x, y, 140); if (n < 0) n = nearest(x, y, 4000); if (n < 0) return;
+    nodes[n].fire = 1.6;
+    for (let k = 0; k < 12; k++) { const u = newPulse(n, true); if (u) pulses.push(u); }
+  }
+
+  const bez = (a, c, b, t) => (1 - t) * (1 - t) * a + 2 * (1 - t) * t * c + t * t * b;
+  function ctrl(e, A, B) {
+    return [(A.sx + B.sx) / 2 - (B.sy - A.sy) * e.bend, (A.sy + B.sy) / 2 + (B.sx - A.sx) * e.bend];
+  }
+
+  let ps = 0;
+  function draw(time, dt) {
+    ctx.clearRect(0, 0, W, H);
+    const k = dt * 60;
+    // camera
+    const approach = ease(clamp(ps / .32)), dive = ease(clamp((ps - .3) / .55));
+    const D = 3.4 - .9 * approach - 2.0 * dive;
+    const F = small ? W * 1.75 : Math.min(W, H) * 1.15;
+    const ox0 = small ? W * .5 : W * .7, oy0 = small ? H * .7 : H * .52;
+    const ox = ox0 + (W * .5 - ox0) * approach, oy = oy0 + (H * .47 - oy0) * approach;
+    if (!dragging) { rotY += vel * k; vel *= Math.pow(.95, k); dragX *= Math.pow(.97, k); }
+    rotY += dt * .2 * S.speed * (reduce ? 0 : 1);
+    rotX = .2 + dragX + my * .18;
+    const yaw = rotY + mx * .35 + ps * 1.8;
+    const cr = Math.cos(yaw), sr = Math.sin(yaw), ct = Math.cos(rotX), st = Math.sin(rotX);
+    const G = S.glow;
+    ctx.globalCompositeOperation = 'lighter';
+
+    // dust flying past while diving
+    const fly = time * .00003 * (1 + S.speed) + ps * 1.2;
+    dust.forEach((d) => {
+      const z = (d.z + fly) % 1, s = .3 + z * z * 3.4;
+      const x = W / 2 + d.x * W * .5 * s, y = H / 2 + d.y * H * .5 * s;
+      ctx.fillStyle = `rgba(220,226,236,${.45 * z * Math.min(1, G)})`;
+      ctx.fillRect(x, y, d.s * (1 + z * 1.5), d.s * (1 + z * 1.5));
+    });
+
+    // project
+    nodes.forEach((n) => {
+      const x1 = n.x * cr - n.z * sr, z1 = n.x * sr + n.z * cr;
+      const y1 = n.y * ct - z1 * st, z2 = n.y * st + z1 * ct;
+      const dz = D - z2;
+      n.vis = dz > .14; n.dz = dz;
+      if (!n.vis) return;
+      const pr = F / dz;
+      n.sx = ox + x1 * pr; n.sy = oy + y1 * pr;
+      n.d = clamp((z2 + 1.1) / 2.2); n.f = clamp((dz - .14) / .55);
+      n.fire *= Math.pow(.95, k);
+    });
+    // hover lights nearby neurons
+    if (!dragging && px > -900) {
+      const h = nearest(px, py, 90);
+      if (h >= 0) { nodes[h].fire = Math.max(nodes[h].fire, 1); nodes[h].ne.forEach((ei) => { const e = edges[ei], o = nodes[e.a === h ? e.b : e.a]; o.fire = Math.max(o.fire, .55); }); }
+    }
+
+    // dendrites
+    edges.forEach((e) => {
+      const A = nodes[e.a], B = nodes[e.b]; if (!A.vis || !B.vis) return;
+      const f = Math.min(A.f, B.f), fire = Math.max(A.fire, B.fire);
+      const al = (.04 + .2 * ((A.d + B.d) / 2) + .45 * Math.min(1, fire)) * G * f;
+      if (al < .01) return;
+      const [qx, qy] = ctrl(e, A, B);
+      ctx.strokeStyle = `rgba(${A.col[0]},${A.col[1]},${A.col[2]},${Math.min(1, al)})`;
+      ctx.lineWidth = Math.min(3.2, .4 + 2.2 / ((A.dz + B.dz) / 2));
+      ctx.beginPath(); ctx.moveTo(A.sx, A.sy); ctx.quadraticCurveTo(qx, qy, B.sx, B.sy); ctx.stroke();
+    });
+    // somas
+    nodes.forEach((n) => {
+      if (!n.vis) return;
+      const r = (2.4 + 3 * n.r) * (1 + n.fire * 1.3) * Math.pow(3.2 / n.dz, .9) * Math.sqrt(G);
+      ctx.globalAlpha = Math.min(1, (.28 + .55 * n.d + .35 * n.fire) * n.f);
+      ctx.drawImage(sprites[n.si], n.sx - r * 1.6, n.sy - r * 1.6, r * 3.2, r * 3.2);
+    });
+    ctx.globalAlpha = 1;
+
+    // impulses with comet tails
+    for (let i = pulses.length - 1; i >= 0; i--) {
+      const u = pulses[i];
+      u.t += u.sp * k * (reduce ? 0 : .6 + .4 * S.speed);
+      if (u.t >= 1) {
+        nodes[u.to].fire = Math.max(nodes[u.to].fire, 1);
+        if (u.hops === 0) { pulses.splice(i, 1); continue; }
+        if (u.hops > 0) u.hops--;
+        const nu = newPulse(u.to, u.hops >= 0); if (!nu) { pulses.splice(i, 1); continue; }
+        nu.hops = u.hops; nu.sp = u.sp; pulses[i] = nu; continue;
+      }
+      const e = edges[u.ei], A = nodes[u.from], B = nodes[u.to];
+      if (!A.vis || !B.vis) continue;
+      const [qx, qy] = ctrl(e, e.a === u.from ? A : B, e.a === u.from ? B : A);
+      const si = B.si, f = Math.min(A.f, B.f), base = 9 * Math.pow(3.2 / ((A.dz + B.dz) / 2), .8) * Math.sqrt(G);
+      for (let s = 0; s < 5; s++) {
+        const tt = u.t - s * .045; if (tt < 0) break;
+        const x = bez(A.sx, qx, B.sx, tt), y = bez(A.sy, qy, B.sy, tt), r = base * (1 - s * .17);
+        ctx.globalAlpha = f * (1 - s * .2);
+        ctx.drawImage(sprites[si], x - r, y - r, r * 2, r * 2);
+      }
+    }
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+
+    // concepts the network knows
+    const la = clamp((ps - .5) / .07) * (1 - clamp((ps - .78) / .07));
+    if (la > 0) {
+      ctx.font = '500 13px Geist, system-ui, sans-serif'; ctx.textBaseline = 'middle';
+      labelNodes.forEach((ni, li) => {
+        const n = nodes[ni]; if (!n || !n.vis) return;
+        const text = LABELS[li], w = ctx.measureText(text).width + 20, x = n.sx + 12, y = n.sy - 18;
+        ctx.globalAlpha = la * (.35 + .65 * n.d) * n.f;
+        ctx.fillStyle = 'rgba(12,13,16,.78)'; ctx.strokeStyle = `rgba(${n.col[0]},${n.col[1]},${n.col[2]},.9)`; ctx.lineWidth = 1;
+        ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y - 13, w, 26, 13); else ctx.rect(x, y - 13, w, 26); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#f7f8f8'; ctx.fillText(text, x + 10, y);
+      });
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function applyHero() {
+    copy.style.opacity = 1 - clamp(ps / .13);
+    copy.style.transform = `translate3d(0, ${-ps * 300}px, 0) scale(${1 - clamp(ps / .13) * .08})`;
+    copy.style.filter = `blur(${clamp(ps / .13) * 10}px)`;
+    copy.style.visibility = ps > .14 ? 'hidden' : '';
+    if (hint) hint.style.opacity = 1 - clamp(ps / .04);
+    const ranges = [[.34, .54], [.54, .74], [.74, 1.3]];
+    caps.forEach((c, i) => {
+      const [a, b] = ranges[i], inn = clamp((ps - a) / .07), out = clamp((ps - (b - .07)) / .07), v = ease(inn) * (1 - ease(out));
+      c.style.opacity = v;
+      c.style.transform = `translate3d(0, ${(1 - inn) * 50 - out * 50}px, 0) scale(${.94 + v * .06})`;
+      c.style.filter = v > .99 ? '' : `blur(${(1 - v) * 10}px)`;
+    });
+  }
+
+  /* ================= main loop ================= */
+  let last = performance.now();
+  function frame(time) {
+    const dt = Math.min(.05, (time - last) / 1000); last = time;
+    if (lenis) lenis.raf(time);
+    if (!loaded) {
+      lp += (lpTarget - lp) * .12; if (bar) bar.style.setProperty('--lp', lp.toFixed(3));
+      if (lp > .985 && time - t0 > 700) finishLoad();
+    }
+    mx += (tx - mx) * .05; my += (ty - my) * .05;
+    gx += (cx - gx) * .14; gy += (cy - gy) * .14;
+    if (glow && fine && S.cursor) glow.style.transform = `translate3d(${gx}px, ${gy}px, 0)`;
+    nav.classList.toggle('scrolled', scrollY > 40);
+    prog.style.setProperty('--sp', clamp(scrollY / (root.scrollHeight - innerHeight)).toFixed(4));
+    if (heroVisible) {
+      const r = hero.getBoundingClientRect();
+      const p = clamp(-r.top / (r.height - sticky.offsetHeight));
+      ps += (p - ps) * (reduce ? 1 : Math.min(1, dt * 7));
+      if (!reduce) applyHero();
+      draw(time, dt);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  /* ================= customizer ================= */
+  const czBtn = $('#czBtn'), czPanel = $('#czPanel');
+  const toggleCz = (open) => { czPanel.dataset.open = open; czBtn.setAttribute('aria-expanded', open); };
+  czBtn.addEventListener('click', () => toggleCz(czPanel.dataset.open !== 'true'));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') toggleCz(false); });
+  document.addEventListener('pointerdown', (e) => { if (czPanel.dataset.open === 'true' && !czPanel.contains(e.target) && !czBtn.contains(e.target)) toggleCz(false); });
+
+  const sw = $('#czSwatches'), names = $('#czNames');
+  Object.entries(THEMES).forEach(([key, th]) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'sw'; b.id = 'czTheme-' + key; b.setAttribute('aria-label', 'Тема ' + th.name);
+    b.style.backgroundImage = `conic-gradient(${th.c[0]}, ${th.c[1]}, ${th.c[2]}, ${th.c[3]}, ${th.c[0]})`;
+    b.addEventListener('click', () => { S.theme = key; save(); syncUi(); applyTheme(); });
+    sw.appendChild(b);
+    const s = document.createElement('span'); s.textContent = th.name; names.appendChild(s);
+  });
+  const ranges = [
+    ['czCount', 'count', (v) => v, () => rebuildNet()],
+    ['czSpeed', 'speed', (v) => v.toFixed(1) + '×', null],
+    ['czGlow', 'glow', (v) => v.toFixed(1) + '×', null],
+    ['czPulses', 'pulses', (v) => v, () => resizePulses()],
+  ];
+  let rebuildTimer = 0;
+  ranges.forEach(([id, key, fmt, after]) => {
+    const el = $('#' + id), out = $('#' + id + 'Out');
+    el.addEventListener('input', () => {
+      S[key] = +el.value; out.textContent = fmt(S[key]); save();
+      if (after) { clearTimeout(rebuildTimer); rebuildTimer = setTimeout(after, key === 'count' ? 120 : 0); }
+    });
+  });
+  const toggles = [['czSmooth', 'smooth'], ['czCursor', 'cursor'], ['czTilt', 'tilt'], ['czReveal', 'reveal'], ['czLiquid', 'liquid']];
+  toggles.forEach(([id, key]) => {
+    $('#' + id).addEventListener('change', (e) => {
+      S[key] = e.target.checked; save(); applyFlags();
+      if (key === 'tilt' && !S.tilt) document.querySelectorAll('.tilt').forEach((el) => { el.style.transform = ''; });
+      if (key === 'liquid' && S.liquid) startLiquid();
+    });
+  });
+  function syncUi() {
+    Object.keys(THEMES).forEach((k) => $('#czTheme-' + k).setAttribute('aria-pressed', k === S.theme));
+    ranges.forEach(([id, key, fmt]) => { $('#' + id).value = S[key]; $('#' + id + 'Out').textContent = fmt(+S[key]); });
+    toggles.forEach(([id, key]) => { $('#' + id).checked = !!S[key]; });
+  }
+  $('#czReset').addEventListener('click', () => {
+    Object.assign(S, DEFAULTS); save(); syncUi(); applyTheme(); applyFlags(); rebuildNet();
+  });
+
+  /* ================= liquid core (Three.js, lazy) ================= */
+  const lcv = $('#liquid'), core = $('#contact');
+  let liquidState = 'idle';
+  function startLiquid() {
+    if (liquidState !== 'idle' || !S.liquid) return;
+    liquidState = 'loading';
+    import('https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js').then((THREE) => initLiquid(THREE)).catch((err) => {
+      console.warn('Liquid core disabled:', err); lcv.remove(); liquidState = 'failed';
+    });
+  }
+  new IntersectionObserver(([en]) => { if (en.isIntersecting) startLiquid(); }, { rootMargin: '900px 0px' }).observe(core);
+
+  function initLiquid(THREE) {
+    const renderer = new THREE.WebGLRenderer({ canvas: lcv, antialias: !small, alpha: true, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, small ? 1.25 : 1.6));
+    renderer.setClearColor(0x000000, 0);
+    const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(30, 1, .1, 100);
+    const SEG = small ? 150 : 260;
+    const col = (h) => new THREE.Vector3(...hexRgb(h).map((v) => v / 255));
+    const th = THEMES[S.theme].c;
+    const uniforms = {
+      uTime: { value: 0 }, uPhase: { value: 0 }, uMouse: { value: new THREE.Vector2(-10, -10) }, uHover: { value: 0 },
+      uPulseAge: { value: -1 }, uPulseAt: { value: new THREE.Vector2(.5, .5) }, uCam: { value: new THREE.Vector3() },
+      uC0: { value: col(th[0]) }, uC1: { value: col(th[1]) }, uC2: { value: col(th[2]) }, uC3: { value: col(th[3]) },
+    };
+    addEventListener('sb-theme', (e) => { ['uC0', 'uC1', 'uC2', 'uC3'].forEach((u, i) => uniforms[u].value.copy(col(e.detail[i]))); });
+    const NOISE = `
+      vec3 mod289(vec3 x){return x-floor(x*(1.0/289.0))*289.0;}
+      vec4 mod289(vec4 x){return x-floor(x*(1.0/289.0))*289.0;}
+      vec4 permute(vec4 x){return mod289(((x*34.0)+1.0)*x);}
+      vec4 taylorInvSqrt(vec4 r){return 1.79284291400159-0.85373472095314*r;}
+      float snoise(vec3 v){
+        const vec2 C=vec2(1.0/6.0,1.0/3.0); const vec4 D=vec4(0.0,0.5,1.0,2.0);
+        vec3 i=floor(v+dot(v,C.yyy)); vec3 x0=v-i+dot(i,C.xxx);
+        vec3 g=step(x0.yzx,x0.xyz); vec3 l=1.0-g; vec3 i1=min(g.xyz,l.zxy); vec3 i2=max(g.xyz,l.zxy);
+        vec3 x1=x0-i1+C.xxx; vec3 x2=x0-i2+C.yyy; vec3 x3=x0-D.yyy;
+        i=mod289(i);
+        vec4 p=permute(permute(permute(i.z+vec4(0.0,i1.z,i2.z,1.0))+i.y+vec4(0.0,i1.y,i2.y,1.0))+i.x+vec4(0.0,i1.x,i2.x,1.0));
+        float n_=0.142857142857; vec3 ns=n_*D.wyz-D.xzx;
+        vec4 j=p-49.0*floor(p*ns.z*ns.z); vec4 x_=floor(j*ns.z); vec4 y_=floor(j-7.0*x_);
+        vec4 x=x_*ns.x+ns.yyyy; vec4 y=y_*ns.x+ns.yyyy; vec4 h=1.0-abs(x)-abs(y);
+        vec4 b0=vec4(x.xy,y.xy); vec4 b1=vec4(x.zw,y.zw);
+        vec4 s0=floor(b0)*2.0+1.0; vec4 s1=floor(b1)*2.0+1.0; vec4 sh=-step(h,vec4(0.0));
+        vec4 a0=b0.xzyw+s0.xzyw*sh.xxyy; vec4 a1=b1.xzyw+s1.xzyw*sh.zzww;
+        vec3 p0=vec3(a0.xy,h.x); vec3 p1=vec3(a0.zw,h.y); vec3 p2=vec3(a1.xy,h.z); vec3 p3=vec3(a1.zw,h.w);
+        vec4 norm=taylorInvSqrt(vec4(dot(p0,p0),dot(p1,p1),dot(p2,p2),dot(p3,p3)));
+        p0*=norm.x; p1*=norm.y; p2*=norm.z; p3*=norm.w;
+        vec4 m=max(0.6-vec4(dot(x0,x0),dot(x1,x1),dot(x2,x2),dot(x3,x3)),0.0); m=m*m;
+        return 42.0*dot(m*m,vec4(dot(p0,x0),dot(p1,x1),dot(p2,x2),dot(p3,x3)));
+      }`;
+    const vertexShader = NOISE + `
+      uniform float uTime,uPhase,uHover,uPulseAge; uniform vec2 uMouse,uPulseAt;
+      varying vec3 vWorld; varying float vH;
+      float softLimit(float x){return x/sqrt(1.0+x*x);}
+      float fbm(vec3 p){ float sum=0.0,amp=1.0,freq=1.0,norm=0.0;
+        for(int i=0;i<6;i++){ float n=abs(snoise(p*freq+vec3(float(i)*7.13,float(i)*3.11,float(i)*5.23))); n=pow(clamp(n,0.0,1.0),2.69); sum+=n*amp; norm+=amp; freq*=1.93; amp*=0.493; }
+        return sum/norm; }
+      float edgePin(vec2 uv){ float d=distance(uv,vec2(0.5)); float pin=1.0-smoothstep(0.217,0.5,d); return pow(clamp(pin,0.0,1.0),2.6); }
+      void main(){
+        vec3 ni=vec3(position.xy*0.404,uPhase*0.32);
+        vec3 warp=vec3(snoise(ni*0.107+vec3(19.2,3.7,11.8)),snoise(ni*0.107+vec3(-7.4,13.1,5.2)),snoise(ni*0.107+vec3(9.3,-17.0,6.1)))*0.551;
+        float base01=softLimit(snoise(ni+warp))*0.5+0.5;
+        float mixed=clamp((mix(base01,fbm(vec3(base01)),0.8)-0.5)*0.76+0.5,0.0,1.0);
+        float shape=mix(0.02,0.88,mixed);
+        float mask=1.0-smoothstep(0.0,0.26,distance(uv,uMouse));
+        float pulse=0.0;
+        if(uPulseAge>=0.0){ float d=distance(uv,uPulseAt)/0.4; pulse=sin(d*14.0-uPulseAge*16.0)*exp(-d*1.6)*exp(-uPulseAge*2.2)*0.9; }
+        float h=edgePin(uv)*(shape*3.8+mask*uHover*1.1+pulse);
+        vH=h; vec3 pos=position; pos.z+=h;
+        vec4 wp=modelMatrix*vec4(pos,1.0); vWorld=wp.xyz;
+        gl_Position=projectionMatrix*viewMatrix*wp;
+      }`;
+    const fragmentShader = `
+      uniform vec3 uCam,uC0,uC1,uC2,uC3; uniform float uTime;
+      varying vec3 vWorld; varying float vH;
+      vec3 pal(float t){ t=fract(t)*4.0;
+        if(t<1.0) return mix(uC0,uC1,t); if(t<2.0) return mix(uC1,uC2,t-1.0); if(t<3.0) return mix(uC2,uC3,t-2.0); return mix(uC3,uC0,t-3.0); }
+      void main(){
+        vec3 n=normalize(cross(dFdx(vWorld),dFdy(vWorld))); vec3 v=normalize(uCam-vWorld); if(dot(n,v)<0.0) n=-n;
+        float fres=pow(1.0-max(dot(n,v),0.0),2.2);
+        float t=vH*0.16+fres*0.55+dot(n.xy,vec2(0.35,0.22))+uTime*0.025;
+        vec3 film=pal(t);
+        vec3 key=normalize(vec3(0.55,-0.6,0.75)), fill=normalize(vec3(-0.7,0.25,0.55));
+        float dif=max(dot(n,key),0.0)*0.8+max(dot(n,fill),0.0)*0.35;
+        float spec=pow(max(dot(n,normalize(key+v)),0.0),70.0)*1.4+pow(max(dot(n,normalize(fill+v)),0.0),40.0)*0.6;
+        float sheen=pow(max(dot(n,normalize(key+v)),0.0),10.0)*0.35;
+        vec3 c=film*(0.18+0.7*dif)+vec3(spec)+film*sheen+pal(t+0.3)*fres*0.7;
+        c*=mix(0.35,1.0,smoothstep(0.0,0.8,vH)); c=1.0-exp(-c*1.25);
+        gl_FragColor=vec4(c,smoothstep(0.03,0.35,vH));
+      }`;
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(10, 10, SEG, SEG),
+      new THREE.ShaderMaterial({ uniforms, vertexShader, fragmentShader, side: THREE.DoubleSide, transparent: true }));
+    scene.add(mesh);
+    let LW = 1, LH = 1;
+    const layout = () => {
+      const r = core.getBoundingClientRect(); LW = r.width; LH = r.height;
+      renderer.setSize(LW, LH, false); camera.aspect = LW / LH; camera.updateProjectionMatrix();
+      mesh.position.set(LW < 900 ? 0 : 3.2, LW < 900 ? 1.6 : 0, 0);
+    };
+    layout(); addEventListener('resize', layout);
+    const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), hit = new THREE.Vector3();
+    let hoverT = 0, lmx = 0, lmy = 0, smx = 0, smy = 0;
+    const toUv = (e) => {
+      const r = lcv.getBoundingClientRect();
+      ndc.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); lmx = ndc.x; lmy = ndc.y;
+      ray.setFromCamera(ndc, camera);
+      if (!ray.ray.intersectPlane(plane, hit)) return null;
+      return new THREE.Vector2((hit.x - mesh.position.x) / 10 + .5, (hit.y - mesh.position.y) / 10 + .5);
+    };
+    core.addEventListener('pointermove', (e) => { const uv = toUv(e); if (uv) { uniforms.uMouse.value.lerp(uv, .35); hoverT = 1; } });
+    core.addEventListener('pointerleave', () => { hoverT = 0; lmx = lmy = 0; });
+    core.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('a, button')) return;
+      const uv = toUv(e); if (uv) { uniforms.uPulseAt.value.copy(uv); uniforms.uPulseAge.value = 0; }
+    });
+    let visible = false, running = false, lt = performance.now();
+    const loop = (now) => {
+      if (!visible || !S.liquid) { running = false; return; }
+      const dt = Math.min(.05, (now - lt) / 1000); lt = now;
+      uniforms.uTime.value += dt; uniforms.uPhase.value += dt * .174 * (reduce ? 0 : 1);
+      uniforms.uHover.value += (hoverT - uniforms.uHover.value) * .06;
+      if (uniforms.uPulseAge.value >= 0) { uniforms.uPulseAge.value += dt; if (uniforms.uPulseAge.value > 3) uniforms.uPulseAge.value = -1; }
+      smx += (lmx - smx) * .05; smy += (lmy - smy) * .05;
+      const r = core.getBoundingClientRect();
+      const sp = clamp(1 - (r.top + r.height) / (innerHeight + r.height));
+      const dist = LW < 900 ? 19 : 15, tilt = .95 - sp * .5;
+      camera.position.set(mesh.position.x * .55 + smx * 1.2, mesh.position.y - Math.cos(tilt) * dist + smy * .8, Math.sin(tilt) * dist + 2);
+      camera.lookAt(mesh.position.x * .55, mesh.position.y * .9, .6);
+      mesh.rotation.z = uniforms.uTime.value * .05;
+      uniforms.uCam.value.copy(camera.position);
+      renderer.render(scene, camera);
+      if (!lcv.classList.contains('ready')) lcv.classList.add('ready');
+      requestAnimationFrame(loop);
+    };
+    const kick = () => { if (visible && S.liquid && !running) { running = true; lt = performance.now(); requestAnimationFrame(loop); } };
+    new IntersectionObserver(([en]) => { visible = en.isIntersecting; kick(); }).observe(core);
+    addEventListener('change', kick);
+    liquidState = 'ready';
+  }
+
+  /* ================= boot ================= */
+  PAL = THEMES[S.theme].c.map(hexRgb);
+  applyTheme();
+  rebuildNet();
+  syncUi();
+  applyFlags();
+  sizeCanvas();
+  if (document.fonts) document.fonts.ready.then(sizeCanvas);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
